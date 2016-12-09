@@ -5,14 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipelines;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Internal;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Sockets.Internal;
 using Microsoft.Extensions.Primitives;
 using Xunit;
 
@@ -23,9 +20,9 @@ namespace Microsoft.AspNetCore.Sockets.Tests
         [Fact]
         public async Task GetIdReservesConnectionIdAndReturnsIt()
         {
-            var manager = new ConnectionManager();
             using (var factory = new PipelineFactory())
             {
+                var manager = new ConnectionManager(factory);
                 var dispatcher = new HttpConnectionDispatcher(manager, factory, loggerFactory: null);
                 var context = new DefaultHttpContext();
                 var ms = new MemoryStream();
@@ -41,34 +38,35 @@ namespace Microsoft.AspNetCore.Sockets.Tests
             }
         }
 
-        [Fact]
-        public async Task SendingToReservedConnectionsThatHaveNotConnectedThrows()
-        {
-            var manager = new ConnectionManager();
-            var state = manager.ReserveConnection();
+        // REVIEW: No longer relevant since we establish the connection right away.
+        //[Fact]
+        //public async Task SendingToReservedConnectionsThatHaveNotConnectedThrows()
+        //{
+        //    using (var factory = new PipelineFactory())
+        //    {
+        //        var manager = new ConnectionManager(factory);
+        //        var state = manager.ReserveConnection();
 
-            using (var factory = new PipelineFactory())
-            {
-                var dispatcher = new HttpConnectionDispatcher(manager, factory, loggerFactory: null);
-                var context = new DefaultHttpContext();
-                context.Request.Path = "/send";
-                var values = new Dictionary<string, StringValues>();
-                values["id"] = state.Connection.ConnectionId;
-                var qs = new QueryCollection(values);
-                context.Request.Query = qs;
-                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                {
-                    await dispatcher.ExecuteAsync<TestEndPoint>("", context);
-                });
-            }
-        }
+        //        var dispatcher = new HttpConnectionDispatcher(manager, factory, loggerFactory: null);
+        //        var context = new DefaultHttpContext();
+        //        context.Request.Path = "/send";
+        //        var values = new Dictionary<string, StringValues>();
+        //        values["id"] = state.Connection.ConnectionId;
+        //        var qs = new QueryCollection(values);
+        //        context.Request.Query = qs;
+        //        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        //        {
+        //            await dispatcher.ExecuteAsync<TestEndPoint>("", context);
+        //        });
+        //    }
+        //}
 
         [Fact]
         public async Task SendingToUnknownConnectionIdThrows()
         {
-            var manager = new ConnectionManager();
             using (var factory = new PipelineFactory())
             {
+                var manager = new ConnectionManager(factory);
                 var dispatcher = new HttpConnectionDispatcher(manager, factory, loggerFactory: null);
                 var context = new DefaultHttpContext();
                 context.Request.Path = "/send";
@@ -86,9 +84,9 @@ namespace Microsoft.AspNetCore.Sockets.Tests
         [Fact]
         public async Task SendingWithoutConnectionIdThrows()
         {
-            var manager = new ConnectionManager();
             using (var factory = new PipelineFactory())
             {
+                var manager = new ConnectionManager(factory);
                 var dispatcher = new HttpConnectionDispatcher(manager, factory, loggerFactory: null);
                 var context = new DefaultHttpContext();
                 context.Request.Path = "/send";
@@ -100,9 +98,9 @@ namespace Microsoft.AspNetCore.Sockets.Tests
         }
     }
 
-    public class TestEndPoint : EndPoint
+    public class TestEndPoint : StreamingEndPoint
     {
-        public override Task OnConnectedAsync(Connection connection)
+        public override Task OnConnectedAsync(StreamingConnection connection)
         {
             throw new NotImplementedException();
         }

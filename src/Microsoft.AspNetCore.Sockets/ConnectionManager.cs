@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.IO.Pipelines;
 using System.Threading;
+using System.Threading.Tasks.Channels;
 using Microsoft.AspNetCore.Sockets.Internal;
 
 namespace Microsoft.AspNetCore.Sockets
@@ -85,7 +86,7 @@ namespace Microsoft.AspNetCore.Sockets
                     }
                     else
                     {
-                        s.Connection.Transport.Dispose();
+                        s.Connection.Dispose();
                     }
                 }
             }
@@ -93,12 +94,25 @@ namespace Microsoft.AspNetCore.Sockets
 
         private ConnectionState CreateMessagingConnection()
         {
-            throw new NotImplementedException();
+            var id = MakeNewConnectionId();
+
+            var transportToApplication = Channel.Create<Message>();
+            var applicationToTransport = Channel.Create<Message>();
+
+            var transportSide = new ChannelConnection<Message>(applicationToTransport, transportToApplication);
+            var applicationSide = new ChannelConnection<Message>(transportToApplication, applicationToTransport);
+
+            var state = new MessagingConnectionState(
+                new MessagingConnection(id, applicationSide),
+                transportSide);
+
+            _connections.TryAdd(id, state);
+            return state;
         }
 
         private ConnectionState CreateStreamingConnection()
         {
-            string id = MakeNewConnectionId();
+            var id = MakeNewConnectionId();
 
             var transportToApplication = _pipelineFactory.Create();
             var applicationToTransport = _pipelineFactory.Create();

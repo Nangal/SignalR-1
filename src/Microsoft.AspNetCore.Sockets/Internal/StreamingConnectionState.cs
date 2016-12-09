@@ -1,4 +1,5 @@
-﻿using System.IO.Pipelines;
+﻿using System;
+using System.IO.Pipelines;
 
 namespace Microsoft.AspNetCore.Sockets.Internal
 {
@@ -10,6 +11,11 @@ namespace Microsoft.AspNetCore.Sockets.Internal
         public StreamingConnectionState(StreamingConnection connection, IPipelineConnection application) : base(connection)
         {
             Application = application;
+        }
+
+        public override void Complete()
+        {
+            Application.Output.Complete();
         }
     }
 }

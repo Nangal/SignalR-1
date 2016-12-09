@@ -6,6 +6,7 @@ using System.IO.Pipelines;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Sockets;
+using Microsoft.AspNetCore.Sockets.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -23,12 +24,13 @@ namespace Microsoft.AspNetCore.SignalR.Tests
 
             using (var connectionWrapper = new ConnectionWrapper())
             {
-                var endPointTask = endPoint.OnConnectedAsync(connectionWrapper.Connection);
+                var endPointTask = endPoint.OnConnectedAsync(connectionWrapper.ConnectionState.Connection);
 
-                await connectionWrapper.HttpConnection.Input.ReadingStarted;
+                // REVIEW: Grossssss
+                await ((PipelineReaderWriter)connectionWrapper.ConnectionState.Application.Input).ReadingStarted;
 
                 // kill the connection
-                connectionWrapper.Connection.Transport.Dispose();
+                connectionWrapper.ConnectionState.Connection.Dispose();
 
                 await endPointTask;
 
@@ -74,27 +76,23 @@ namespace Microsoft.AspNetCore.SignalR.Tests
         private class ConnectionWrapper : IDisposable
         {
             private PipelineFactory _factory;
-            private HttpConnection _httpConnection;
 
-            public Connection Connection;
-            public HttpConnection HttpConnection => (HttpConnection)Connection.Transport;
+            public StreamingConnectionState ConnectionState;
 
             public ConnectionWrapper(string format = "json")
             {
                 _factory = new PipelineFactory();
-                _httpConnection = new HttpConnection(_factory);
 
-                var connectionManager = new ConnectionManager();
+                var connectionManager = new ConnectionManager(_factory);
 
-                Connection = connectionManager.AddNewConnection(_httpConnection).Connection;
-                Connection.Metadata["formatType"] = format;
-                Connection.User = new ClaimsPrincipal(new ClaimsIdentity());
+                ConnectionState = (StreamingConnectionState)connectionManager.CreateConnection(ConnectionMode.Streaming);
+                ConnectionState.Connection.Metadata["formatType"] = format;
+                ConnectionState.Connection.User = new ClaimsPrincipal(new ClaimsIdentity());
             }
 
             public void Dispose()
             {
-                Connection.Transport.Dispose();
-                _httpConnection.Dispose();
+                ConnectionState.Connection.Dispose();
                 _factory.Dispose();
             }
         }

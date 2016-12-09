@@ -8,6 +8,7 @@ namespace Microsoft.AspNetCore.Sockets.Internal
     public abstract class ConnectionState
     {
         public Connection Connection { get; set; }
+        public ConnectionMode Mode => Connection.Mode;
 
         // These are used for long polling mostly
         public Action Close { get; set; }
@@ -19,5 +20,7 @@ namespace Microsoft.AspNetCore.Sockets.Internal
             Connection = connection;
             LastSeenUtc = DateTime.UtcNow;
         }
+
+        public abstract void Complete();
     }
 }

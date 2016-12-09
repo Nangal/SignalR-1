@@ -7,6 +7,15 @@ namespace Microsoft.AspNetCore.Sockets
     {
         public override ConnectionMode Mode => ConnectionMode.Streaming;
 
+        internal protected override Task OnConnectedAsync(Connection connection)
+        {
+            if(connection.Mode != Mode)
+            {
+                throw new InvalidOperationException($"Connection mode does not match endpoint mode. Connection mode is '{connection.Mode}', endpoint mode is '{Mode}'");
+            }
+            return OnConnectedAsync((StreamingConnection)connection);
+        }
+
         /// <summary>
         /// Called when a new connection is accepted to the endpoint
         /// </summary>

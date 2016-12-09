@@ -18,5 +18,12 @@ namespace Microsoft.AspNetCore.Sockets
         /// This usually maps directly to which of <see cref="MessagingEndPoint"/> or <see cref="StreamingEndPoint"/> the end point subclasses.
         /// </remarks>
         public abstract ConnectionMode Mode { get; }
+
+        /// <summary>
+        /// Called when a new connection is accepted to the endpoint
+        /// </summary>
+        /// <param name="connection">The new <see cref="MessagingConnection"/></param>
+        /// <returns>A <see cref="Task"/> that represents the connection lifetime. When the task completes, the connection is complete.</returns>
+        internal protected abstract Task OnConnectedAsync(Connection connection);
     }
 }

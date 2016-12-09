@@ -15,5 +15,10 @@ namespace Microsoft.AspNetCore.Sockets
         {
             Transport = transport;
         }
+
+        public override void Dispose()
+        {
+            Transport.Dispose();
+        }
     }
 }

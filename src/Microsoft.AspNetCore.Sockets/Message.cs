@@ -1,18 +1,24 @@
-﻿using System.IO.Pipelines;
+﻿using System;
+using System.IO.Pipelines;
 
 namespace Microsoft.AspNetCore.Sockets
 {
-    public struct Message
+    public struct Message : IDisposable
     {
         public bool EndOfMessage { get; }
         public Format MessageFormat { get; }
-        public ReadableBuffer Payload { get; }
+        public PreservedBuffer Payload { get; }
 
-        public Message(Format messageFormat, bool endOfMessage, ReadableBuffer payload)
+        public Message(PreservedBuffer payload, Format messageFormat, bool endOfMessage)
         {
             MessageFormat = messageFormat;
             EndOfMessage = endOfMessage;
             Payload = payload;
+        }
+
+        public void Dispose()
+        {
+            ((IDisposable)Payload).Dispose();
         }
     }
 }
