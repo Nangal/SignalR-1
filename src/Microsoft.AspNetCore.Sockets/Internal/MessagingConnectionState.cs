@@ -10,9 +10,10 @@
             Application = application;
         }
 
-        public override void Complete()
+        public override void Dispose()
         {
-            Application.Output.TryComplete();
+            Connection.Dispose();
+            Application.Dispose();
         }
     }
 }

@@ -13,9 +13,10 @@ namespace Microsoft.AspNetCore.Sockets.Internal
             Application = application;
         }
 
-        public override void Complete()
+        public override void Dispose()
         {
-            Application.Output.Complete();
+            Connection.Dispose();
+            Application.Dispose();
         }
     }
 }

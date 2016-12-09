@@ -26,11 +26,13 @@ namespace Microsoft.AspNetCore.SignalR.Tests
             {
                 var endPointTask = endPoint.OnConnectedAsync(connectionWrapper.ConnectionState.Connection);
 
+                await Task.Delay(10000);
+
                 // REVIEW: Grossssss
-                await ((PipelineReaderWriter)connectionWrapper.ConnectionState.Application.Input).ReadingStarted;
+                await ((PipelineReaderWriter)connectionWrapper.ConnectionState.Connection.Transport.Input).ReadingStarted;
 
                 // kill the connection
-                connectionWrapper.ConnectionState.Connection.Dispose();
+                connectionWrapper.ConnectionState.Dispose();
 
                 await endPointTask;
 

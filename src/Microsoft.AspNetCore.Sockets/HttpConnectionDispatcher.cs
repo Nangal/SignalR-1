@@ -110,7 +110,7 @@ namespace Microsoft.AspNetCore.Sockets
                     // REVIEW: This is super gross, this all needs to be cleaned up...
                     state.Close = async () =>
                     {
-                        state.Connection.Dispose();
+                        state.Dispose();
 
                         await endpointTask;
                     };
@@ -185,7 +185,7 @@ namespace Microsoft.AspNetCore.Sockets
             await Task.WhenAny(endpointTask, transportTask);
 
             // Kill the channel
-            state.Complete();
+            state.Dispose();
 
             // Wait for both
             await Task.WhenAll(endpointTask, transportTask);
@@ -200,7 +200,7 @@ namespace Microsoft.AspNetCore.Sockets
         private static void RegisterDisconnect(HttpContext context, ConnectionState connectionState)
         {
             // We just kill the output writing as a signal to the transport that it is done
-            context.RequestAborted.Register(state => ((ConnectionState)state).Complete(), connectionState);
+            context.RequestAborted.Register(state => ((ConnectionState)state).Dispose(), connectionState);
         }
 
         private Task ProcessGetId(HttpContext context, ConnectionMode mode)

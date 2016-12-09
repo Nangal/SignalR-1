@@ -86,7 +86,7 @@ namespace Microsoft.AspNetCore.Sockets
                     }
                     else
                     {
-                        s.Connection.Dispose();
+                        s.Dispose();
                     }
                 }
             }

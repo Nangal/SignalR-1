@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,7 +45,8 @@ namespace Microsoft.AspNetCore.Sockets.Internal
             // We need to think about how we do this. There's no way to check if there is data available in a Pipeline... though maybe there should be
             // We could ReadAsync and check IsCompleted, but then we'd also need to stash that Awaitable for later since we can't call ReadAsync a second time...
             // CancelPendingReads could help here.
-            throw new NotSupportedException();
+            item = default(Message);
+            return false;
         }
 
         Task<bool> IReadableChannel<Message>.WaitToReadAsync(CancellationToken cancellationToken)
@@ -72,7 +72,7 @@ namespace Microsoft.AspNetCore.Sockets.Internal
         bool IWritableChannel<Message>.TryWrite(Message item)
         {
             // We need to think about how we do this. We don't have a wait to synchronously check for back-pressure in the Pipeline.
-            throw new NotSupportedException();
+            return false;
         }
 
         bool IWritableChannel<Message>.TryComplete(Exception error)

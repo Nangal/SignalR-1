@@ -5,7 +5,7 @@ using System;
 
 namespace Microsoft.AspNetCore.Sockets.Internal
 {
-    public abstract class ConnectionState
+    public abstract class ConnectionState : IDisposable
     {
         public Connection Connection { get; set; }
         public ConnectionMode Mode => Connection.Mode;
@@ -21,6 +21,6 @@ namespace Microsoft.AspNetCore.Sockets.Internal
             LastSeenUtc = DateTime.UtcNow;
         }
 
-        public abstract void Complete();
+        public abstract void Dispose();
     }
 }

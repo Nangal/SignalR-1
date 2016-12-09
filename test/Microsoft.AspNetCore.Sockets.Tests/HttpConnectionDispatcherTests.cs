@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Sockets.Internal;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Xunit;
 
@@ -23,8 +25,11 @@ namespace Microsoft.AspNetCore.Sockets.Tests
             using (var factory = new PipelineFactory())
             {
                 var manager = new ConnectionManager(factory);
-                var dispatcher = new HttpConnectionDispatcher(manager, factory, loggerFactory: null);
+                var dispatcher = new HttpConnectionDispatcher(manager, factory, new LoggerFactory());
                 var context = new DefaultHttpContext();
+                var services = new ServiceCollection();
+                services.AddSingleton<TestEndPoint>();
+                context.RequestServices = services.BuildServiceProvider();
                 var ms = new MemoryStream();
                 context.Request.Path = "/getid";
                 context.Response.Body = ms;
@@ -67,8 +72,11 @@ namespace Microsoft.AspNetCore.Sockets.Tests
             using (var factory = new PipelineFactory())
             {
                 var manager = new ConnectionManager(factory);
-                var dispatcher = new HttpConnectionDispatcher(manager, factory, loggerFactory: null);
+                var dispatcher = new HttpConnectionDispatcher(manager, factory, new LoggerFactory());
                 var context = new DefaultHttpContext();
+                var services = new ServiceCollection();
+                services.AddSingleton<TestEndPoint>();
+                context.RequestServices = services.BuildServiceProvider();
                 context.Request.Path = "/send";
                 var values = new Dictionary<string, StringValues>();
                 values["id"] = "unknown";
@@ -87,8 +95,11 @@ namespace Microsoft.AspNetCore.Sockets.Tests
             using (var factory = new PipelineFactory())
             {
                 var manager = new ConnectionManager(factory);
-                var dispatcher = new HttpConnectionDispatcher(manager, factory, loggerFactory: null);
+                var dispatcher = new HttpConnectionDispatcher(manager, factory, new LoggerFactory());
                 var context = new DefaultHttpContext();
+                var services = new ServiceCollection();
+                services.AddSingleton<TestEndPoint>();
+                context.RequestServices = services.BuildServiceProvider();
                 context.Request.Path = "/send";
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                 {
