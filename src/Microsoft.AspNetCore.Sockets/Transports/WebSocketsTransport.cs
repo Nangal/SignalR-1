@@ -155,32 +155,39 @@ namespace Microsoft.AspNetCore.Sockets.Transports
             while (!_connection.Input.Completion.IsCompleted)
             {
                 // Get a frame from the application
-                using (var message = await _connection.Input.ReadAsync())
+                try
                 {
-                    if (message.Payload.Buffer.Length > 0)
+                    using (var message = await _connection.Input.ReadAsync())
                     {
-                        try
+                        if (message.Payload.Buffer.Length > 0)
                         {
-                            var opcode = message.MessageFormat == Format.Binary ?
-                                WebSocketOpcode.Binary :
-                                WebSocketOpcode.Text;
+                            try
+                            {
+                                var opcode = message.MessageFormat == Format.Binary ?
+                                    WebSocketOpcode.Binary :
+                                    WebSocketOpcode.Text;
 
-                            var frame = new WebSocketFrame(
-                                endOfMessage: message.EndOfMessage,
-                                opcode: _lastFrameIncomplete ? WebSocketOpcode.Continuation : opcode,
-                                payload: message.Payload.Buffer);
+                                var frame = new WebSocketFrame(
+                                    endOfMessage: message.EndOfMessage,
+                                    opcode: _lastFrameIncomplete ? WebSocketOpcode.Continuation : opcode,
+                                    payload: message.Payload.Buffer);
 
-                            _lastFrameIncomplete = !message.EndOfMessage;
+                                _lastFrameIncomplete = !message.EndOfMessage;
 
-                            LogFrame("Sending", frame);
-                            await ws.SendAsync(frame);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError("Error writing frame to output: {0}", ex);
-                            break;
+                                LogFrame("Sending", frame);
+                                await ws.SendAsync(frame);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError("Error writing frame to output: {0}", ex);
+                                break;
+                            }
                         }
                     }
+                }
+                catch (Exception ex) when (ex.GetType().IsNested && ex.GetType().DeclaringType == typeof(Channel))
+                {
+                    // Gross that we have to catch this this way. See https://github.com/dotnet/corefxlab/issues/1068
                 }
             }
         }
